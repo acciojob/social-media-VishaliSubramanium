@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { BrowserRouter, Routes, Route, Link, useNavigate, useParams } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+  useParams
+} from "react-router-dom";
 import "./../styles/App.css";
 
 const initialUsers = [
@@ -18,7 +25,9 @@ const initialPosts = [
     reactions: {
       like: 2,
       love: 1,
-      wow: 0
+      haha: 0,
+      wow: 0,
+      sad: 0
     }
   },
   {
@@ -29,7 +38,9 @@ const initialPosts = [
     reactions: {
       like: 3,
       love: 2,
-      wow: 1
+      haha: 0,
+      wow: 1,
+      sad: 0
     }
   },
   {
@@ -40,7 +51,9 @@ const initialPosts = [
     reactions: {
       like: 1,
       love: 0,
-      wow: 0
+      haha: 0,
+      wow: 0,
+      sad: 0
     }
   }
 ];
@@ -59,7 +72,9 @@ function Layout() {
         reactions: {
           like: 0,
           love: 0,
-          wow: 0
+          haha: 0,
+          wow: 0,
+          sad: 0
         }
       }
     ]);
@@ -165,7 +180,6 @@ function Layout() {
             <EditPost
               posts={posts}
               updatePost={updatePost}
-              users={users}
             />
           }
         />
@@ -203,7 +217,9 @@ function Home({ posts, users, addReaction }) {
 function Post({ post, users, addReaction }) {
   const navigate = useNavigate();
 
-  const author = users.find((user) => user.id === post.userId);
+  const author = users.find(
+    (user) => user.id === post.userId
+  );
 
   return (
     <article className="post">
@@ -224,8 +240,16 @@ function Post({ post, users, addReaction }) {
           Love {post.reactions.love}
         </button>
 
+        <button onClick={() => addReaction(post.id, "haha")}>
+          Haha {post.reactions.haha}
+        </button>
+
         <button onClick={() => addReaction(post.id, "wow")}>
           Wow {post.reactions.wow}
+        </button>
+
+        <button onClick={() => addReaction(post.id, "sad")}>
+          Sad {post.reactions.sad}
         </button>
       </div>
 
@@ -262,7 +286,9 @@ function Users({ users }) {
 function UserPosts({ users, posts, addReaction }) {
   const { userId } = useParams();
 
-  const user = users.find((item) => item.id === Number(userId));
+  const user = users.find(
+    (item) => item.id === Number(userId)
+  );
 
   const userPosts = posts.filter(
     (post) => post.userId === Number(userId)
@@ -310,7 +336,10 @@ function Notifications({
           <p>No notifications.</p>
         ) : (
           notifications.map((notification, index) => (
-            <div key={index} className="notification">
+            <div
+              key={index}
+              className="notification"
+            >
               {notification}
             </div>
           ))
@@ -349,33 +378,52 @@ function CreatePost({ users, addPost }) {
     <main className="page">
       <h2>Create Post</h2>
 
-      <form onSubmit={handleSubmit} className="post-form">
-        <label htmlFor="postAuthor">Select Author</label>
+      <form
+        onSubmit={handleSubmit}
+        className="post-form"
+      >
+        <label htmlFor="postAuthor">
+          Select Author
+        </label>
 
         <select
           id="postAuthor"
           value={author}
-          onChange={(event) => setAuthor(event.target.value)}
+          onChange={(event) =>
+            setAuthor(event.target.value)
+          }
         >
-          <option value="">Select an author</option>
+          <option value="">
+            Select an author
+          </option>
 
           {users.map((user) => (
-            <option key={user.id} value={user.id}>
+            <option
+              key={user.id}
+              value={user.id}
+            >
               {user.name}
             </option>
           ))}
         </select>
 
-        <label htmlFor="postContent">Post Content</label>
+        <label htmlFor="postContent">
+          Post Content
+        </label>
 
         <textarea
           id="postContent"
           value={content}
-          onChange={(event) => setContent(event.target.value)}
+          onChange={(event) =>
+            setContent(event.target.value)
+          }
           placeholder="Write your post..."
         />
 
-        <button type="submit" className="button">
+        <button
+          type="submit"
+          className="button"
+        >
           Create Post
         </button>
       </form>
@@ -383,7 +431,7 @@ function CreatePost({ users, addPost }) {
   );
 }
 
-function EditPost({ posts, updatePost, users }) {
+function EditPost({ posts, updatePost }) {
   const { postId } = useParams();
   const navigate = useNavigate();
 
@@ -391,8 +439,13 @@ function EditPost({ posts, updatePost, users }) {
     (item) => item.id === Number(postId)
   );
 
-  const [title, setTitle] = useState(post ? post.title : "");
-  const [content, setContent] = useState(post ? post.content : "");
+  const [title, setTitle] = useState(
+    post ? post.title : ""
+  );
+
+  const [content, setContent] = useState(
+    post ? post.content : ""
+  );
 
   if (!post) {
     return (
@@ -418,24 +471,38 @@ function EditPost({ posts, updatePost, users }) {
     <main className="page">
       <h2>Edit Post</h2>
 
-      <form onSubmit={handleSubmit} className="post-form">
-        <label htmlFor="postTitle">Post Title</label>
+      <form
+        onSubmit={handleSubmit}
+        className="post-form"
+      >
+        <label htmlFor="postTitle">
+          Post Title
+        </label>
 
         <input
           id="postTitle"
           value={title}
-          onChange={(event) => setTitle(event.target.value)}
+          onChange={(event) =>
+            setTitle(event.target.value)
+          }
         />
 
-        <label htmlFor="postContent">Post Content</label>
+        <label htmlFor="postContent">
+          Post Content
+        </label>
 
         <textarea
           id="postContent"
           value={content}
-          onChange={(event) => setContent(event.target.value)}
+          onChange={(event) =>
+            setContent(event.target.value)
+          }
         />
 
-        <button type="submit" className="button">
+        <button
+          type="submit"
+          className="button"
+        >
           Save Changes
         </button>
       </form>

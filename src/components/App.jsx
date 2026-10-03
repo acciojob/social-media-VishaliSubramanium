@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useCallback } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -37,7 +37,7 @@ const initialPosts = [
     content: 'Nested routing and layout routes make building SPAs seamless.',
     user: '2',
     date: new Date().toISOString(),
-    reactions: { thumbsUp: 4, hooray: 0, heart: 1, rocket: 3, eyes: 2 }
+    reactions: { thumbsUp: 4, hooray: 0, heart: 1, rocket: 3, eyes: 0 }
   }
 ];
 
@@ -47,7 +47,7 @@ export const AppProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
 
   // Add a new post
-  const addPost = (title, content, userId) => {
+  const addPost = useCallback((title, content, userId) => {
     const newPost = {
       id: Date.now().toString(),
       title,
@@ -56,36 +56,38 @@ export const AppProvider = ({ children }) => {
       date: new Date().toISOString(),
       reactions: { thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0 }
     };
-    setPosts((prev) => [newPost, ...prev]);
-  };
+    setPosts((prevPosts) => [newPost, ...prevPosts]);
+  }, []);
 
   // Edit an existing post
-  const editPost = (id, title, content) => {
-    setPosts((prev) =>
-      prev.map((post) => (post.id === id ? { ...post, title, content } : post))
+  const editPost = useCallback((id, title, content) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === id ? { ...post, title, content } : post
+      )
     );
-  };
+  }, []);
 
   // Add a reaction to a post
-  const addReaction = (postId, reactionName) => {
-    setPosts((prev) =>
-      prev.map((post) => {
+  const addReaction = useCallback((postId, reactionName) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => {
         if (post.id === postId) {
           return {
             ...post,
             reactions: {
               ...post.reactions,
-              [reactionName]: post.reactions[reactionName] + 1
+              [reactionName]: (post.reactions[reactionName] || 0) + 1
             }
           };
         }
         return post;
       })
     );
-  };
+  }, []);
 
   // Fetch / Refresh Notifications
-  const fetchNotifications = () => {
+  const fetchNotifications = useCallback(() => {
     const mockNotifications = [
       {
         id: Date.now().toString(),
@@ -99,7 +101,7 @@ export const AppProvider = ({ children }) => {
       }
     ];
     setNotifications(mockNotifications);
-  };
+  }, []);
 
   return (
     <AppContext.Provider
@@ -136,7 +138,7 @@ const ReactionButtons = ({ post }) => {
   const { addReaction } = useApp();
 
   return (
-    <div>
+    <div className="reaction-buttons">
       {Object.entries(reactionEmoji).map(([name, emoji]) => (
         <button
           key={name}
@@ -144,7 +146,7 @@ const ReactionButtons = ({ post }) => {
           className="muted-button reaction-button"
           onClick={() => addReaction(post.id, name)}
         >
-          {emoji} {post.reactions[name]}
+          {emoji} {post.reactions?.[name] ?? 0}
         </button>
       ))}
     </div>

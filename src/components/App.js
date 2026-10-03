@@ -1,528 +1,459 @@
-import React, { useState } from "react";
+import React, { createContext, useState, useContext } from 'react';
 import {
-  BrowserRouter,
+  BrowserRouter as Router,
   Routes,
   Route,
   Link,
-  useNavigate,
-  useParams
-} from "react-router-dom";
-import "./../styles/App.css";
+  NavLink,
+  Navigate,
+  useParams,
+  useNavigate
+} from 'react-router-dom';
 
-const users = [
-  { id: 1, name: "John Doe" },
-  { id: 2, name: "Jane Smith" },
-  { id: 3, name: "Alex Johnson" },
-  { id: 4, name: "Emily Brown" }
+// ==========================================
+// 1. CONTEXT & STATE MANAGEMENT
+// ==========================================
+
+const AppContext = createContext();
+
+const initialUsers = [
+  { id: '1', name: 'Tianna Jenkins' },
+  { id: '2', name: 'Kevin Grant' },
+  { id: '3', name: 'Madison Price' }
 ];
 
 const initialPosts = [
   {
-    id: 1,
-    userId: 1,
-    title: "My First Post",
-    content: "Hello everyone! Welcome to my first post.",
-    reactions: {
-      like: 0,
-      love: 0,
-      haha: 0,
-      wow: 0,
-      sad: 0
-    }
+    id: '101',
+    title: 'First Post!',
+    content: 'Hello world! Excited to join this new social platform.',
+    user: '1',
+    date: new Date().toISOString(),
+    reactions: { thumbsUp: 2, hooray: 1, heart: 5, rocket: 0, eyes: 0 }
   },
   {
-    id: 2,
-    userId: 2,
-    title: "React is Amazing",
-    content: "Learning React Router makes building apps easier.",
-    reactions: {
-      like: 0,
-      love: 0,
-      haha: 0,
-      wow: 0,
-      sad: 0
-    }
-  },
-  {
-    id: 3,
-    userId: 3,
-    title: "Weekend Plans",
-    content: "Looking forward to a great weekend!",
-    reactions: {
-      like: 0,
-      love: 0,
-      haha: 0,
-      wow: 0,
-      sad: 0
-    }
+    id: '102',
+    title: 'React Router v6 Rules',
+    content: 'Nested routing and layout routes make building SPAs seamless.',
+    user: '2',
+    date: new Date().toISOString(),
+    reactions: { thumbsUp: 4, hooray: 0, heart: 1, rocket: 3, eyes: 2 }
   }
 ];
 
-function AppContent() {
+export const AppProvider = ({ children }) => {
   const [posts, setPosts] = useState(initialPosts);
+  const [users] = useState(initialUsers);
   const [notifications, setNotifications] = useState([]);
 
-  const addPost = (userId, content) => {
+  // Add a new post
+  const addPost = (title, content, userId) => {
     const newPost = {
-      id: Date.now(),
-      userId: Number(userId),
-      title: "New Post",
-      content: content,
-      reactions: {
-        like: 0,
-        love: 0,
-        haha: 0,
-        wow: 0,
-        sad: 0
-      }
+      id: Date.now().toString(),
+      title,
+      content,
+      user: userId,
+      date: new Date().toISOString(),
+      reactions: { thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0 }
     };
-
-    setPosts((currentPosts) => [...currentPosts, newPost]);
+    setPosts((prev) => [newPost, ...prev]);
   };
 
-  const updatePost = (postId, title, content) => {
-    setPosts((currentPosts) =>
-      currentPosts.map((post) =>
-        post.id === Number(postId)
-          ? {
-              ...post,
-              title,
-              content
-            }
-          : post
-      )
+  // Edit an existing post
+  const editPost = (id, title, content) => {
+    setPosts((prev) =>
+      prev.map((post) => (post.id === id ? { ...post, title, content } : post))
     );
   };
 
-  const addReaction = (postId, reaction) => {
-    setPosts((currentPosts) =>
-      currentPosts.map((post) => {
-        if (post.id !== Number(postId)) {
-          return post;
+  // Add a reaction to a post
+  const addReaction = (postId, reactionName) => {
+    setPosts((prev) =>
+      prev.map((post) => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            reactions: {
+              ...post.reactions,
+              [reactionName]: post.reactions[reactionName] + 1
+            }
+          };
         }
-
-        return {
-          ...post,
-          reactions: {
-            ...post.reactions,
-            [reaction]: post.reactions[reaction] + 1
-          }
-        };
+        return post;
       })
     );
   };
 
-  const refreshNotifications = () => {
-    setNotifications([
-      "John Doe created a new post.",
-      "Jane Smith reacted to a post.",
-      "Alex Johnson edited a post.",
-      "You have new activity on your posts."
-    ]);
+  // Fetch / Refresh Notifications
+  const fetchNotifications = () => {
+    const mockNotifications = [
+      {
+        id: Date.now().toString(),
+        message: 'Tianna Jenkins liked your post.',
+        date: new Date().toLocaleTimeString()
+      },
+      {
+        id: (Date.now() + 1).toString(),
+        message: 'Kevin Grant posted a new update.',
+        date: new Date().toLocaleTimeString()
+      }
+    ];
+    setNotifications(mockNotifications);
   };
 
   return (
-    <>
-      <nav className="navbar">
-        <h1>Social Media App</h1>
-
-        <div className="nav-links">
-          <Link to="/">Home</Link>
-          <Link to="/users">Users</Link>
-          <Link to="/notifications">Notifications</Link>
-          <Link to="/create">Create Post</Link>
-        </div>
-      </nav>
-
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <Home
-              posts={posts}
-              addReaction={addReaction}
-            />
-          }
-        />
-
-        <Route
-          path="/users"
-          element={<Users />}
-        />
-
-        <Route
-          path="/users/:userId"
-          element={
-            <UserPosts
-              posts={posts}
-              addReaction={addReaction}
-            />
-          }
-        />
-
-        <Route
-          path="/notifications"
-          element={
-            <Notifications
-              notifications={notifications}
-              refreshNotifications={refreshNotifications}
-            />
-          }
-        />
-
-        <Route
-          path="/create"
-          element={<CreatePost addPost={addPost} />}
-        />
-
-        <Route
-          path="/edit/:postId"
-          element={
-            <EditPost
-              posts={posts}
-              updatePost={updatePost}
-            />
-          }
-        />
-      </Routes>
-    </>
+    <AppContext.Provider
+      value={{
+        posts,
+        users,
+        notifications,
+        addPost,
+        editPost,
+        addReaction,
+        fetchNotifications
+      }}
+    >
+      {children}
+    </AppContext.Provider>
   );
-}
+};
 
-function Home({ posts, addReaction }) {
-  return (
-    <main className="page">
-      <div className="tabs">
-        <Link to="/">Posts</Link>
-        <Link to="/users">Users</Link>
-        <Link to="/notifications">Notifications</Link>
-        <Link to="/create">Create Post</Link>
-      </div>
+export const useApp = () => useContext(AppContext);
 
-      <h2>Latest Posts</h2>
+// ==========================================
+// 2. REUSABLE COMPONENTS
+// ==========================================
 
-      <div className="posts-list">
-        {posts.map((post) => (
-          <Post
-            key={post.id}
-            post={post}
-            addReaction={addReaction}
-          />
-        ))}
-      </div>
-    </main>
-  );
-}
+const reactionEmoji = {
+  thumbsUp: '👍',
+  hooray: '🎉',
+  heart: '❤️',
+  rocket: '🚀',
+  eyes: '👀'
+};
 
-function Post({ post, addReaction }) {
-  const navigate = useNavigate();
-
-  const author = users.find(
-    (user) => user.id === post.userId
-  );
+const ReactionButtons = ({ post }) => {
+  const { addReaction } = useApp();
 
   return (
-    <div className="post">
-      <h3>{post.title}</h3>
-
-      <p className="author">
-        By {author ? author.name : "Unknown User"}
-      </p>
-
-      <p>{post.content}</p>
-
-      <div className="reactions">
+    <div>
+      {Object.entries(reactionEmoji).map(([name, emoji]) => (
         <button
-          onClick={() => addReaction(post.id, "like")}
+          key={name}
+          type="button"
+          className="muted-button reaction-button"
+          onClick={() => addReaction(post.id, name)}
         >
-          Like {post.reactions.like}
+          {emoji} {post.reactions[name]}
         </button>
-
-        <button
-          onClick={() => addReaction(post.id, "love")}
-        >
-          Love {post.reactions.love}
-        </button>
-
-        <button
-          onClick={() => addReaction(post.id, "haha")}
-        >
-          Haha {post.reactions.haha}
-        </button>
-
-        <button
-          onClick={() => addReaction(post.id, "wow")}
-        >
-          Wow {post.reactions.wow}
-        </button>
-
-        <button
-          onClick={() => addReaction(post.id, "sad")}
-        >
-          Sad {post.reactions.sad}
-        </button>
-      </div>
-
-      <button
-        className="button"
-        onClick={() => navigate(`/edit/${post.id}`)}
-      >
-        Edit
-      </button>
+      ))}
     </div>
   );
-}
+};
 
-function Users() {
+const Navbar = () => {
   return (
-    <main className="page">
-      <h2>Users</h2>
-
-      <div className="users-list">
-        {users.map((user) => (
-          <Link
-            key={user.id}
-            to={`/users/${user.id}`}
-            className="user-card"
-          >
-            {user.name}
-          </Link>
-        ))}
-      </div>
-    </main>
+    <nav className="navbar">
+      <section>
+        <h1>Social Media App</h1>
+        <div className="navLinks">
+          <NavLink to="/" className={({ isActive }) => (isActive ? 'active' : '')}>
+            Posts
+          </NavLink>
+          <NavLink to="/notifications" className={({ isActive }) => (isActive ? 'active' : '')}>
+            Notifications
+          </NavLink>
+          <NavLink to="/users" className={({ isActive }) => (isActive ? 'active' : '')}>
+            Users
+          </NavLink>
+          <NavLink to="/addPost" className={({ isActive }) => (isActive ? 'active' : '')}>
+            Create Post
+          </NavLink>
+        </div>
+      </section>
+    </nav>
   );
-}
+};
 
-function UserPosts({ posts, addReaction }) {
-  const { userId } = useParams();
+// ==========================================
+// 3. PAGES
+// ==========================================
 
-  const user = users.find(
-    (item) => item.id === Number(userId)
-  );
-
-  const userPosts = posts.filter(
-    (post) => post.userId === Number(userId)
-  );
+// Posts Landing Page
+const PostsList = () => {
+  const { posts, users } = useApp();
 
   return (
-    <main className="page">
-      <h2>
-        {user ? user.name : "User"}'s Posts
-      </h2>
-
-      <div className="posts-list">
-        {userPosts.length === 0 ? (
-          <p>No posts available.</p>
-        ) : (
-          userPosts.map((post) => (
-            <Post
-              key={post.id}
-              post={post}
-              addReaction={addReaction}
-            />
-          ))
-        )}
-      </div>
-    </main>
-  );
-}
-
-function Notifications({
-  notifications,
-  refreshNotifications
-}) {
-  return (
-    <main className="page">
-      <h2>Notifications</h2>
-
-      <button
-        className="button"
-        onClick={refreshNotifications}
-      >
-        Refresh Notifications
-      </button>
-
-      <div className="notifications">
-        {notifications.length === 0 ? (
-          <p>No notifications.</p>
-        ) : (
-          notifications.map((notification, index) => (
-            <div
-              className="notification"
-              key={index}
-            >
-              {notification}
+    <section className="posts-list">
+      <h2>Posts</h2>
+      {posts.map((post) => {
+        const author = users.find((u) => u.id === post.user);
+        return (
+          <article className="post-excerpt post" key={post.id}>
+            <h3>{post.title}</h3>
+            <div>
+              <span>by {author ? author.name : 'Unknown author'}</span>
             </div>
-          ))
-        )}
-      </div>
-    </main>
+            <p className="post-content">{post.content.substring(0, 100)}</p>
+            <ReactionButtons post={post} />
+            <Link to={`/posts/${post.id}`} className="button muted-button">
+              View Post
+            </Link>
+          </article>
+        );
+      })}
+    </section>
   );
-}
+};
 
-function CreatePost({ addPost }) {
+// Single Post Page
+const SinglePostPage = () => {
+  const { postId } = useParams();
+  const { posts, users } = useApp();
+
+  const post = posts.find((p) => p.id === postId);
+
+  if (!post) {
+    return (
+      <section>
+        <h2>Post not found!</h2>
+      </section>
+    );
+  }
+
+  const author = users.find((u) => u.id === post.user);
+
+  return (
+    <section>
+      <article className="post">
+        <h2>{post.title}</h2>
+        <div>
+          <span>by {author ? author.name : 'Unknown author'}</span>
+        </div>
+        <p className="post-content">{post.content}</p>
+        <ReactionButtons post={post} />
+        <Link to={`/editPost/${post.id}`} className="button">
+          Edit Post
+        </Link>
+      </article>
+    </section>
+  );
+};
+
+// Create Post Page
+const AddPostForm = () => {
+  const [title, setTitle] = useState('');
+  const [userId, setUserId] = useState('');
+  const [content, setContent] = useState('');
+  const { users, addPost } = useApp();
   const navigate = useNavigate();
 
-  const [author, setAuthor] = useState("");
-  const [content, setContent] = useState("");
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-
-    if (!author || !content.trim()) {
-      return;
+  const onSavePostClicked = () => {
+    if (title && content && userId) {
+      addPost(title, content, userId);
+      setTitle('');
+      setContent('');
+      setUserId('');
+      navigate('/');
     }
-
-    addPost(Number(author), content.trim());
-
-    navigate("/");
   };
 
+  const canSave = Boolean(title) && Boolean(content) && Boolean(userId);
+
   return (
-    <main className="page">
-      <h2>Create Post</h2>
+    <section>
+      <h2>Add a New Post</h2>
+      <form>
+        <label htmlFor="postTitle">Post Title:</label>
+        <input
+          type="text"
+          id="postTitle"
+          name="postTitle"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
-      <form
-        className="post-form"
-        onSubmit={handleSubmit}
-      >
-        <label htmlFor="postAuthor">
-          Select Author
-        </label>
-
+        <label htmlFor="postAuthor">Author:</label>
         <select
           id="postAuthor"
-          value={author}
-          onChange={(event) =>
-            setAuthor(event.target.value)
-          }
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
         >
-          <option value="">
-            Select an author
-          </option>
-
+          <option value="">Select Author...</option>
           {users.map((user) => (
-            <option
-              key={user.id}
-              value={user.id}
-            >
+            <option key={user.id} value={user.id}>
               {user.name}
             </option>
           ))}
         </select>
 
-        <label htmlFor="postContent">
-          Post Content
-        </label>
-
+        <label htmlFor="postContent">Content:</label>
         <textarea
           id="postContent"
+          name="postContent"
           value={content}
-          onChange={(event) =>
-            setContent(event.target.value)
-          }
-          placeholder="Write your post..."
+          onChange={(e) => setContent(e.target.value)}
         />
 
-        <button
-          type="submit"
-          className="button"
-        >
-          Create Post
+        <button type="button" onClick={onSavePostClicked} disabled={!canSave}>
+          Save Post
         </button>
       </form>
-    </main>
-  );
-}
-
-function EditPost({ posts, updatePost }) {
-  const { postId } = useParams();
-  const navigate = useNavigate();
-
-  const post = posts.find(
-    (item) => item.id === Number(postId)
-  );
-
-  const [title, setTitle] = useState(
-    post ? post.title : ""
-  );
-
-  const [content, setContent] = useState(
-    post ? post.content : ""
-  );
-
-  if (!post) {
-    return (
-      <main className="page">
-        <h2>Post not found</h2>
-      </main>
-    );
-  }
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-
-    updatePost(
-      post.id,
-      title.trim(),
-      content.trim()
-    );
-
-    navigate("/");
-  };
-
-  return (
-    <main className="page">
-      <h2>Edit Post</h2>
-
-      <form
-        className="post-form"
-        onSubmit={handleSubmit}
-      >
-        <label htmlFor="postTitle">
-          Post Title
-        </label>
-
-        <input
-          id="postTitle"
-          type="text"
-          value={title}
-          onChange={(event) =>
-            setTitle(event.target.value)
-          }
-        />
-
-        <label htmlFor="postContent">
-          Post Content
-        </label>
-
-        <textarea
-          id="postContent"
-          value={content}
-          onChange={(event) =>
-            setContent(event.target.value)
-          }
-        />
-
-        <button
-          type="submit"
-          className="button"
-        >
-          Save Changes
-        </button>
-      </form>
-    </main>
-  );
-}
-
-const App = () => {
-  return (
-    <div>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </div>
+    </section>
   );
 };
 
-export default App;
+// Edit Post Page
+const EditPostForm = () => {
+  const { postId } = useParams();
+  const { posts, editPost } = useApp();
+  const navigate = useNavigate();
+
+  const post = posts.find((p) => p.id === postId);
+
+  const [title, setTitle] = useState(post ? post.title : '');
+  const [content, setContent] = useState(post ? post.content : '');
+
+  if (!post) {
+    return (
+      <section>
+        <h2>Post not found!</h2>
+      </section>
+    );
+  }
+
+  const onSavePostClicked = () => {
+    if (title && content) {
+      editPost(post.id, title, content);
+      navigate(`/posts/${post.id}`);
+    }
+  };
+
+  return (
+    <section className="post">
+      <h2>Edit Post</h2>
+      <form>
+        <label htmlFor="postTitle">Post Title:</label>
+        <input
+          type="text"
+          id="postTitle"
+          name="postTitle"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+
+        <label htmlFor="postContent">Content:</label>
+        <textarea
+          id="postContent"
+          name="postContent"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+        />
+
+        <button className="button" type="button" onClick={onSavePostClicked}>
+          Save Post
+        </button>
+      </form>
+    </section>
+  );
+};
+
+// Users List Page
+const UsersList = () => {
+  const { users } = useApp();
+
+  return (
+    <section>
+      <h2>Users</h2>
+      <ul>
+        {users.map((user) => (
+          <li key={user.id}>
+            <Link to={`/users/${user.id}`}>{user.name}</Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+};
+
+// Single User Profile Page
+const UserPage = () => {
+  const { userId } = useParams();
+  const { users, posts } = useApp();
+
+  const user = users.find((u) => u.id === userId);
+  const userPosts = posts.filter((p) => p.user === userId);
+
+  if (!user) {
+    return (
+      <section>
+        <h2>User not found!</h2>
+      </section>
+    );
+  }
+
+  return (
+    <section>
+      <h2>{user.name}'s Posts</h2>
+      <ul>
+        {userPosts.map((post) => (
+          <li key={post.id}>
+            <Link to={`/posts/${post.id}`}>{post.title}</Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+};
+
+// Notifications Page
+const NotificationsList = () => {
+  const { notifications, fetchNotifications } = useApp();
+
+  return (
+    <section className="notificationsList">
+      <h2>Notifications</h2>
+      <button className="button" onClick={fetchNotifications}>
+        Refresh Notifications
+      </button>
+      {notifications.length === 0 ? (
+        <p style={{ marginTop: '1rem' }}>No notifications yet. Click refresh!</p>
+      ) : (
+        notifications.map((notification) => (
+          <div key={notification.id} className="notification">
+            <div>
+              <b>{notification.message}</b>
+            </div>
+            <small>{notification.date}</small>
+          </div>
+        ))
+      )}
+    </section>
+  );
+};
+
+// ==========================================
+// 4. MAIN APP ENTRY POINT WITH ROUTING
+// ==========================================
+
+export default function App() {
+  return (
+    <AppProvider>
+      <Router>
+        <Navbar />
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<PostsList />} />
+            <Route path="/posts/:postId" element={<SinglePostPage />} />
+            <Route path="/editPost/:postId" element={<EditPostForm />} />
+            <Route path="/addPost" element={<AddPostForm />} />
+            <Route path="/users" element={<UsersList />} />
+            <Route path="/users/:userId" element={<UserPage />} />
+            <Route path="/notifications" element={<NotificationsList />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </Router>
+    </AppProvider>
+  );
+}

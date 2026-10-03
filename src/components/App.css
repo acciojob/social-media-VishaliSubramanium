@@ -92,6 +92,7 @@ body {
 
 .reactions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin: 15px 0;
 }
@@ -182,4 +183,24 @@ button:hover {
 .post-form .button {
   margin-top: 10px;
   width: fit-content;
+}
+
+@media (max-width: 700px) {
+  .navbar {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .reactions {
+    flex-direction: column;
+  }
 }

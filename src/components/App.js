@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 import "./../styles/App.css";
 
-const initialUsers = [
+const users = [
   { id: 1, name: "John Doe" },
   { id: 2, name: "Jane Smith" },
   { id: 3, name: "Alex Johnson" },
@@ -23,8 +23,8 @@ const initialPosts = [
     title: "My First Post",
     content: "Hello everyone! Welcome to my first post.",
     reactions: {
-      like: 2,
-      love: 1,
+      like: 0,
+      love: 0,
       haha: 0,
       wow: 0,
       sad: 0
@@ -36,10 +36,10 @@ const initialPosts = [
     title: "React is Amazing",
     content: "Learning React Router makes building apps easier.",
     reactions: {
-      like: 3,
-      love: 2,
+      like: 0,
+      love: 0,
       haha: 0,
-      wow: 1,
+      wow: 0,
       sad: 0
     }
   },
@@ -49,7 +49,7 @@ const initialPosts = [
     title: "Weekend Plans",
     content: "Looking forward to a great weekend!",
     reactions: {
-      like: 1,
+      like: 0,
       love: 0,
       haha: 0,
       wow: 0,
@@ -58,49 +58,57 @@ const initialPosts = [
   }
 ];
 
-function Layout() {
-  const [users] = useState(initialUsers);
+function AppContent() {
   const [posts, setPosts] = useState(initialPosts);
   const [notifications, setNotifications] = useState([]);
 
-  const addPost = (post) => {
-    setPosts((currentPosts) => [
-      ...currentPosts,
-      {
-        ...post,
-        id: Date.now(),
-        reactions: {
-          like: 0,
-          love: 0,
-          haha: 0,
-          wow: 0,
-          sad: 0
-        }
+  const addPost = (userId, content) => {
+    const newPost = {
+      id: Date.now(),
+      userId: Number(userId),
+      title: "New Post",
+      content: content,
+      reactions: {
+        like: 0,
+        love: 0,
+        haha: 0,
+        wow: 0,
+        sad: 0
       }
-    ]);
+    };
+
+    setPosts((currentPosts) => [...currentPosts, newPost]);
   };
 
-  const updatePost = (updatedPost) => {
+  const updatePost = (postId, title, content) => {
     setPosts((currentPosts) =>
       currentPosts.map((post) =>
-        post.id === updatedPost.id ? updatedPost : post
+        post.id === Number(postId)
+          ? {
+              ...post,
+              title,
+              content
+            }
+          : post
       )
     );
   };
 
   const addReaction = (postId, reaction) => {
     setPosts((currentPosts) =>
-      currentPosts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              reactions: {
-                ...post.reactions,
-                [reaction]: post.reactions[reaction] + 1
-              }
-            }
-          : post
-      )
+      currentPosts.map((post) => {
+        if (post.id !== Number(postId)) {
+          return post;
+        }
+
+        return {
+          ...post,
+          reactions: {
+            ...post.reactions,
+            [reaction]: post.reactions[reaction] + 1
+          }
+        };
+      })
     );
   };
 
@@ -114,7 +122,7 @@ function Layout() {
   };
 
   return (
-    <div>
+    <>
       <nav className="navbar">
         <h1>Social Media App</h1>
 
@@ -132,7 +140,6 @@ function Layout() {
           element={
             <Home
               posts={posts}
-              users={users}
               addReaction={addReaction}
             />
           }
@@ -140,14 +147,13 @@ function Layout() {
 
         <Route
           path="/users"
-          element={<Users users={users} />}
+          element={<Users />}
         />
 
         <Route
           path="/users/:userId"
           element={
             <UserPosts
-              users={users}
               posts={posts}
               addReaction={addReaction}
             />
@@ -166,12 +172,7 @@ function Layout() {
 
         <Route
           path="/create"
-          element={
-            <CreatePost
-              users={users}
-              addPost={addPost}
-            />
-          }
+          element={<CreatePost addPost={addPost} />}
         />
 
         <Route
@@ -184,11 +185,11 @@ function Layout() {
           }
         />
       </Routes>
-    </div>
+    </>
   );
 }
 
-function Home({ posts, users, addReaction }) {
+function Home({ posts, addReaction }) {
   return (
     <main className="page">
       <div className="tabs">
@@ -205,7 +206,6 @@ function Home({ posts, users, addReaction }) {
           <Post
             key={post.id}
             post={post}
-            users={users}
             addReaction={addReaction}
           />
         ))}
@@ -214,7 +214,7 @@ function Home({ posts, users, addReaction }) {
   );
 }
 
-function Post({ post, users, addReaction }) {
+function Post({ post, addReaction }) {
   const navigate = useNavigate();
 
   const author = users.find(
@@ -222,7 +222,7 @@ function Post({ post, users, addReaction }) {
   );
 
   return (
-    <article className="post">
+    <div className="post">
       <h3>{post.title}</h3>
 
       <p className="author">
@@ -232,23 +232,33 @@ function Post({ post, users, addReaction }) {
       <p>{post.content}</p>
 
       <div className="reactions">
-        <button onClick={() => addReaction(post.id, "like")}>
+        <button
+          onClick={() => addReaction(post.id, "like")}
+        >
           Like {post.reactions.like}
         </button>
 
-        <button onClick={() => addReaction(post.id, "love")}>
+        <button
+          onClick={() => addReaction(post.id, "love")}
+        >
           Love {post.reactions.love}
         </button>
 
-        <button onClick={() => addReaction(post.id, "haha")}>
+        <button
+          onClick={() => addReaction(post.id, "haha")}
+        >
           Haha {post.reactions.haha}
         </button>
 
-        <button onClick={() => addReaction(post.id, "wow")}>
+        <button
+          onClick={() => addReaction(post.id, "wow")}
+        >
           Wow {post.reactions.wow}
         </button>
 
-        <button onClick={() => addReaction(post.id, "sad")}>
+        <button
+          onClick={() => addReaction(post.id, "sad")}
+        >
           Sad {post.reactions.sad}
         </button>
       </div>
@@ -259,11 +269,11 @@ function Post({ post, users, addReaction }) {
       >
         Edit
       </button>
-    </article>
+    </div>
   );
 }
 
-function Users({ users }) {
+function Users() {
   return (
     <main className="page">
       <h2>Users</h2>
@@ -283,7 +293,7 @@ function Users({ users }) {
   );
 }
 
-function UserPosts({ users, posts, addReaction }) {
+function UserPosts({ posts, addReaction }) {
   const { userId } = useParams();
 
   const user = users.find(
@@ -296,20 +306,21 @@ function UserPosts({ users, posts, addReaction }) {
 
   return (
     <main className="page">
-      <h2>{user ? user.name : "User"}'s Posts</h2>
+      <h2>
+        {user ? user.name : "User"}'s Posts
+      </h2>
 
       <div className="posts-list">
-        {userPosts.length > 0 ? (
+        {userPosts.length === 0 ? (
+          <p>No posts available.</p>
+        ) : (
           userPosts.map((post) => (
             <Post
               key={post.id}
               post={post}
-              users={users}
               addReaction={addReaction}
             />
           ))
-        ) : (
-          <p>No posts available.</p>
         )}
       </div>
     </main>
@@ -337,8 +348,8 @@ function Notifications({
         ) : (
           notifications.map((notification, index) => (
             <div
-              key={index}
               className="notification"
+              key={index}
             >
               {notification}
             </div>
@@ -349,7 +360,7 @@ function Notifications({
   );
 }
 
-function CreatePost({ users, addPost }) {
+function CreatePost({ addPost }) {
   const navigate = useNavigate();
 
   const [author, setAuthor] = useState("");
@@ -362,14 +373,7 @@ function CreatePost({ users, addPost }) {
       return;
     }
 
-    addPost({
-      userId: Number(author),
-      title: "New Post",
-      content: content.trim()
-    });
-
-    setAuthor("");
-    setContent("");
+    addPost(Number(author), content.trim());
 
     navigate("/");
   };
@@ -379,8 +383,8 @@ function CreatePost({ users, addPost }) {
       <h2>Create Post</h2>
 
       <form
-        onSubmit={handleSubmit}
         className="post-form"
+        onSubmit={handleSubmit}
       >
         <label htmlFor="postAuthor">
           Select Author
@@ -458,11 +462,11 @@ function EditPost({ posts, updatePost }) {
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    updatePost({
-      ...post,
-      title,
-      content
-    });
+    updatePost(
+      post.id,
+      title.trim(),
+      content.trim()
+    );
 
     navigate("/");
   };
@@ -472,8 +476,8 @@ function EditPost({ posts, updatePost }) {
       <h2>Edit Post</h2>
 
       <form
-        onSubmit={handleSubmit}
         className="post-form"
+        onSubmit={handleSubmit}
       >
         <label htmlFor="postTitle">
           Post Title
@@ -481,6 +485,7 @@ function EditPost({ posts, updatePost }) {
 
         <input
           id="postTitle"
+          type="text"
           value={title}
           onChange={(event) =>
             setTitle(event.target.value)
@@ -514,7 +519,7 @@ const App = () => {
   return (
     <div>
       <BrowserRouter>
-        <Layout />
+        <AppContent />
       </BrowserRouter>
     </div>
   );
